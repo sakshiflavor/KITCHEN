@@ -36,8 +36,8 @@
         const branchId = urlParams.get('branchId');
         const branchName = decodeURIComponent(urlParams.get('branchName') || 'Kitchen');
 
-        if (!branchId) {
-            window.location.href = 'kitchen-login.html';
+ if (!branchId) {
+            window.location.href = 'https://sakshiflavor.github.io/KITCHEN-LOGIN/';
         }
 
         document.getElementById('kds-title').innerText = `Kitchen KDS - ${branchName}`;
