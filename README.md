@@ -114,9 +114,9 @@
       </div>
 
       <div id="orderList"></div>
-    </div>
+ </div>
 
-    <script>
+ <script>
       const FIREBASE_URL =
         'https://test-d34cf-default-rtdb.europe-west1.firebasedatabase.app';
       let lastOrderCount = null;
