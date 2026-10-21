@@ -22,13 +22,32 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 20px;
+        flex-wrap: wrap;
+        gap: 10px;
       }
       h2 {
         margin: 0;
         color: #1a202c;
         font-size: 22px;
       }
-
+      .header-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .btn-enable {
+        background: #319795;
+        color: white;
+        border: none;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+        transition: background 0.2s;
+      }
+      .btn-enable:hover {
+        background: #285e61;
+      }
       .btn-clear {
         background: #e53e3e;
         color: white;
@@ -43,7 +62,6 @@
       .btn-clear:hover {
         background: #c53030;
       }
-
       .order-card {
         background: white;
         padding: 20px;
@@ -63,7 +81,6 @@
           transform: translateY(0);
         }
       }
-
       .order-header {
         display: flex;
         justify-content: space-between;
@@ -108,18 +125,24 @@
     <div class="container">
       <div class="header-row">
         <h2>🍳 Live Kitchen Orders</h2>
-        <button class="btn-clear" onclick="clearAllOrders()">
-          🗑️ Clear All Orders
-        </button>
+        <div class="header-actions">
+          <button class="btn-enable" id="audioBtn" onclick="enableAudio()">
+            🔔 Enable Alarm Sound
+          </button>
+          <button class="btn-clear" onclick="clearAllOrders()">
+            🗑️ Clear All
+          </button>
+        </div>
       </div>
 
       <div id="orderList"></div>
- </div>
+    </div>
 
- <script>
+    <script>
       const FIREBASE_URL =
         'https://test-d34cf-default-rtdb.europe-west1.firebasedatabase.app';
       let lastOrderCount = null;
+      let audioCtx = null;
 
       function esc(v) {
         return String(v ?? '').replace(
@@ -135,18 +158,65 @@
         );
       }
 
+      function enableAudio() {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+          // Play a short confirmation beep
+          playTone(600, 0.15);
+          document.getElementById('audioBtn').style.background = '#38a169';
+          document.getElementById('audioBtn').innerText = '✅ Alarm Active';
+        } catch (e) {
+          alert('Could not enable audio.');
+        }
+      }
+
+      function playTone(frequency, duration) {
+        try {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext());
+          }
+          let osc = audioCtx.createOscillator();
+          let gain = audioCtx.createGain();
+
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+
+          gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioCtx.currentTime + duration
+          );
+
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+
+          osc.start(audioCtx.currentTime);
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {
+          console.log('Audio playback prevented.');
+        }
+      }
+
       // Continuous 5-second alarm tone using Web Audio API
       function playAlarm() {
         try {
-          const audioCtx = new (window.AudioContext ||
-            window.webkitAudioContext)();
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext());
+          }
+          if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+          }
+
           let osc = audioCtx.createOscillator();
           let gain = audioCtx.createGain();
 
           osc.type = 'sine';
           osc.frequency.setValueAtTime(880, audioCtx.currentTime); // Pitch
 
-          // Hold continuous sound for 4.8 seconds, then fade out smoothly over 0.2 seconds (total 5 seconds)
+          // Hold continuous sound for 4.8 seconds, then fade out smoothly over 0.2 seconds
           gain.gain.setValueAtTime(0.4, audioCtx.currentTime);
           gain.gain.setValueAtTime(0.4, audioCtx.currentTime + 4.8);
           gain.gain.exponentialRampToValueAtTime(
@@ -160,9 +230,7 @@
           osc.start(audioCtx.currentTime);
           osc.stop(audioCtx.currentTime + 5.0);
         } catch (e) {
-          console.log(
-            'Audio playback blocked until user interacts with the page.'
-          );
+          console.log('Audio playback blocked until user interacts.');
         }
       }
 
